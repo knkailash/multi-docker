@@ -1,0 +1,36 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t kailashkn/react-test-fib -f ./client/Dockerfile.dev .
+
+script:
+  - docker run -e CI=true kailashkn/react-test-fib npm run test
+
+after_success:
+  - docker build -t kailashkn/multi-client-fib ./client
+  - docker build -t kailashkn/multi-nginx-fib ./nginx
+  - docker build -t kailashkn/multi-server-fib ./server
+  - docker build -t kailashkn/multi-worker-fib ./worker
+# Login to Docker CLI
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+# Take images and push to DockerHub
+- docker push kailashkn/multi-client-fib
+- docker push kailashkn/multi-nginx-fib
+- docker push kailashkn/multi-server-fib
+- docker push kailashkn/multi-worker-fib
+
+#deploy:
+#  provider: elasticbeanstalk
+#  region: "us-east-1"
+#  app: "docker-react"
+#  env: "Dockerreact-env"
+#  bucket_name: "elasticbeanstalk-us-east-1-677897595633"
+#  bucket_properties: "docker-react"
+#  on:
+#    branch: main
+#  access_key_id: $AWS_ACCESS_KEY
+#  secret_access_key: "$AWS_SECRET_KEY"
